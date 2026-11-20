@@ -1,0 +1,57 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+BASE_URL="https://www.euronews.com"
+
+page=$(curl -s "$BASE_URL")
+readarray -t hrefs < <(echo "/programs/top-news-stories-today"; printf '%s' "$page" | xmllint --html --xpath \
+  '//a[contains(@class,"c-navigation-bar__link")]/@href' -  2>/dev/null | sed 's/^ href="\(.*\)"/\1/')
+readarray -t labels < <(echo "News Bulletins"; printf '%s' "$page" | xmllint --html --xpath \
+  '//a[contains(@class,"c-navigation-bar__link")]/text()' - 2>/dev/null )
+
+for label in "${labels[@]}"; do
+  csv+="${label//,},"
+done
+
+csv=${csv%?}
+read -r code index < <(termux-dialog radio -t "Euronews videos - choose category" -v "$csv" | jq -j '.code, " ", .index')
+[[ $code -ne -1 ]] && exit
+url="$BASE_URL${hrefs[index]}"
+page=$(curl -s "$url")
+mol_path='//article[contains(@class, "has-video")]/descendant::a[contains(@class,"the-media-object__link")]'
+readarray -t all_hrefs < <(printf '%s' "$page" | xmllint --html --xpath \
+  "$mol_path/@href" -  2>/dev/null | sed 's/^ href="\(.*\)"/\1/')
+readarray -t all_labels < <(printf '%s' "$page" | xmllint --html --xpath \
+  "$mol_path/@aria-label" -  2>/dev/null | sed 's/^ aria-label="\(.*\)"/\1/')
+
+[[ $index -eq 0 ]] && v_flag="" || v_flag="v"
+hrefs=()
+labels=()
+n=${#all_hrefs[@]}
+
+for (( i=0; i<${n}; i++ )); do
+  echo "${all_hrefs[$i]}" | grep -${v_flag}cq latest-news-bulletin # ; echo $?
+  if ! (( $? )); then
+    hrefs+=( "${all_hrefs[$i]}" )
+    labels+=( "$(echo "${all_labels[$i]}" | w3m -dump -T text/html -O UTF-8 -cols 200)" )
+  fi
+done
+
+csv=""
+
+for label in "${labels[@]}"; do
+  csv+="${label//,},"
+done
+
+csv=${csv%?}
+read -r code index < <(termux-dialog spinner -t "Choose video to watch" -v "$csv" | jq -j '.code, " ", .index')
+[[ $code -ne -1 ]] && exit
+page_url=${hrefs[index]}
+mp4_url=$(curl -sL "https://www.euronews.com$page_url" \
+  | xmllint --html --xpath 'string(//meta[@name="nli:video"]/@content)' - 2>/dev/null)
+#su -c "dumpsys activity recents | grep -B3 is.xyz.mpv | grep -oE 'StackId=[0-9]+' | \
+#  head -1 | cut -d= -f2 | xargs am stack remove 2>/dev/null
+##su -c "dumpsys activity recents | grep -B3 is.xyz.mpv | grep -oE 'StackId=[0-9]+' | \
+##  head -1 | cut -d= -f2 | xargs cmd activity remove-task 2>/dev/null"
+#su -c "am force-stop is.xyz.mpv"
+#am start --user 0 -a android.intent.action.VIEW -d "$mp4_url" -t video/mp4 -p "$PLAYER"
+termux-open --content-type video/mp4 $mp4_url
