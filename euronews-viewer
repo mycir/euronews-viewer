@@ -1,10 +1,15 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
 BASE_URL="https://www.euronews.com"
+# comment out to suit system performance
+#MAX_ITEMS=500 # enough for everything scraped
+MAX_ITEMS=75 # enough for most recent videos
 
 page=$(curl -s "$BASE_URL")
+
 readarray -t hrefs < <(echo "/programs/top-news-stories-today"; printf '%s' "$page" | xmllint --html --xpath \
   '//a[contains(@class,"c-navigation-bar__link")]/@href' -  2>/dev/null | sed 's/^ href="\(.*\)"/\1/')
+
 readarray -t labels < <(echo "News Bulletins"; printf '%s' "$page" | xmllint --html --xpath \
   '//a[contains(@class,"c-navigation-bar__link")]/text()' - 2>/dev/null )
 
@@ -18,8 +23,10 @@ read -r code index < <(termux-dialog radio -t "Euronews videos - choose category
 url="$BASE_URL${hrefs[index]}"
 page=$(curl -s "$url")
 mol_path='//article[contains(@class, "has-video")]/descendant::a[contains(@class,"the-media-object__link")]'
+
 readarray -t all_hrefs < <(printf '%s' "$page" | xmllint --html --xpath \
   "$mol_path/@href" -  2>/dev/null | sed 's/^ href="\(.*\)"/\1/')
+  
 readarray -t all_labels < <(printf '%s' "$page" | xmllint --html --xpath \
   "$mol_path/@aria-label" -  2>/dev/null | sed 's/^ aria-label="\(.*\)"/\1/')
 
@@ -28,7 +35,7 @@ hrefs=()
 labels=()
 n=${#all_hrefs[@]}
 
-for (( i=0; i<${n}; i++ )); do
+for (( i=0; i<${n} && i<$MAX_ITEMS; i++ )); do
   echo "${all_hrefs[$i]}" | grep -${v_flag}cq latest-news-bulletin # ; echo $?
   if ! (( $? )); then
     hrefs+=( "${all_hrefs[$i]}" )
