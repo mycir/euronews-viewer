@@ -13,7 +13,7 @@ If the Euronews app isn't working for you, you may find this [Termux](https://f-
 
 In Termux:
 ```
-$ pkg install termux-api libxml-utils jq w3m
+$ pkg install termux-api libxml2-utils jq w3m
 ```
 Optional:
 
