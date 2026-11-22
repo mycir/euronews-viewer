@@ -46,7 +46,7 @@ If there's an excessive delay before the video selection dialog is shown, try a 
 If mpv-android is your default player, it will not autoplay on subsequent executions of this script and you will need to tap/click/key its play button. Possible solution requiring root:
 ```
 su -c "dumpsys activity recents | grep -B3 is.xyz.mpv | grep -oE 'StackId=[0-9]+' | \
-   head -1 | cut -d= -f2 | xargs am stack remove 2>/dev/null
+   head -1 | cut -d= -f2 | xargs am stack remove" 2>/dev/null
 su -c "am force-stop is.xyz.mpv"
 termux-open --content-type video/mp4 $mp4_url
 ```
