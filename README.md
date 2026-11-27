@@ -1,6 +1,8 @@
 # euronews-viewer
 
 If the Euronews app isn't working for you, you may find this [Termux](https://f-droid.org/en/packages/com.termux/) script useful.
+
+_Kindly use the app if it works on your device - the only reason for development of this script was inability to watch Euronews, other than in a browser, which is inconvenient using an IR remote._
 |                  ​​​​​​​                                    |                                                    |
 | :--------------------------------------------------: | :------------------------------------------------: |
 | ![euronews-viewer](screenshots/category-chooser.png) | ![euronews-viewer](screenshots/video-chooser.png)  |

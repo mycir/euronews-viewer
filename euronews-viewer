@@ -5,7 +5,7 @@ BASE_URL="https://www.euronews.com"
 #MAX_ITEMS=500 # enough for everything scraped
 MAX_ITEMS=75 # enough for most recent videos
 
-page=$(curl -s "$BASE_URL")
+page=$(curl -sL "$BASE_URL")
 
 readarray -t hrefs < <(echo "/programs/top-news-stories-today"; printf '%s' "$page" | xmllint --html --xpath \
   '//a[contains(@class,"c-navigation-bar__link")]/@href' -  2>/dev/null | sed 's/^ href="\(.*\)"/\1/')
@@ -27,8 +27,7 @@ mol_path='//article[contains(@class, "has-video")]/descendant::a[contains(@class
 readarray -t all_hrefs < <(printf '%s' "$page" | xmllint --html --xpath \
   "$mol_path/@href" -  2>/dev/null | sed 's/^ href="\(.*\)"/\1/')
   
-readarray -t all_labels < <(printf '%s' "$page" | xmllint --html --xpath \
-  "$mol_path/@aria-label" -  2>/dev/null | sed 's/^ aria-label="\(.*\)"/\1/')
+readarray -t all_labels < <(printf '%s' "$page" | xmllint --html --xpath  "$mol_path/text()" -  2>/dev/null )
 
 [[ $index -eq 0 ]] && v_flag="" || v_flag="v"
 hrefs=()
